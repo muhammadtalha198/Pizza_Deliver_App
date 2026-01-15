@@ -11,3 +11,6 @@ uvicorn app.main:app --reload
 
 
 git checkout -b basic_feature
+
+
+docker compose up -d
