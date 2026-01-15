@@ -1,0 +1,2 @@
+APP_NAME=Pizza Delivery API
+ENVIRONMENT=dev
