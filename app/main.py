@@ -6,7 +6,7 @@ from app.routes.health import router as health_router
 
 def create_app() -> FastAPI:
     setup_logging()
-    app = FastAPI(title=settings.app_name)
+    app = FastAPI(title=settings.APP_NAME)
     app.include_router(health_router, prefix="/api")
     return app
 
