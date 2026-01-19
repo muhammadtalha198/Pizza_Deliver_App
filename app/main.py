@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 from app.core.config import settings
 from app.core.logging import setup_logging
+
 from app.routes.health import router as health_router
-from app.routes.auth import router as auth_router
+from app.routes.user_routes import router as auth_router
+
 from app.routes.protected import router as protected_router
 
 

@@ -12,7 +12,9 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str
 
+    # access token info
     SECRET_KEY: str
+    access_token_expire_minutes: int
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
