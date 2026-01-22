@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
+
 
 # Token Response (output)
 class Token(BaseModel):
@@ -7,3 +8,4 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     username: str | None = None
+    email: EmailStr | None = None

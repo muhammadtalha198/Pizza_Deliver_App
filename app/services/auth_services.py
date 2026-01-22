@@ -1,15 +1,20 @@
 from datetime import timedelta, datetime, timezone
 
 import jwt
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer
+from jwt import InvalidTokenError
 from pwdlib import PasswordHash
+from sqlalchemy.sql.annotation import Annotated
 from sqlmodel import Session, select
 from starlette import status
 
 from app.core.config import settings
 from app.models.user_models import User
+from app.schemas.auth_schemas import TokenData
 
 ALGORITHM = "HS256"
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 password_hash = PasswordHash.recommended()
 
 class AuthServices:
@@ -20,9 +25,7 @@ class AuthServices:
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(
-                minutes=settings.access_token_expire_minutes
-            )
+            expire = datetime.now(timezone.utc) + timedelta( minutes=settings.access_token_expire_minutes)
 
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
@@ -68,3 +71,35 @@ class AuthServices:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Wrong Password")
         return user
 
+    @staticmethod
+    def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Session) -> User:
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+            username = payload.get("sub")
+            email = payload.get("email")
+            if username is None:
+                raise credentials_exception
+            token_data = TokenData(username=username, email=email)
+        except InvalidTokenError:
+            raise credentials_exception
+        user = AuthServices.get_user_by_username_or_email(token_data.username,session)
+        if user is None:
+            raise credentials_exception
+        return user
+
+    @staticmethod
+    def get_current_active_user(current_user: Annotated[User, Depends(get_current_user)]) -> User:
+        if not current_user.is_active:
+            raise HTTPException(status_code=400, detail="Inactive user")
+        return current_user
+
+    @staticmethod
+    def require_admin(current_user: Annotated[User, Depends(get_current_user)])-> User:
+        if not current_user.is_admin:
+            raise HTTPException(status_code=400, detail="Admin required")
+        return current_user
