@@ -30,6 +30,7 @@ def decode_token(token: str) -> dict:
     return AuthServices.decode_token(token)
 
 def get_user(username_or_email: str, session: Session) -> User | None:
+    """Get user by username or email, returns None if not found (for checking existence)"""
     return AuthServices.get_user_by_username_or_email(username_or_email, session)
 
 def authenticate_user(identifier: str, password: str, session: Session):

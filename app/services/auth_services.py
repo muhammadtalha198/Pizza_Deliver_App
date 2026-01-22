@@ -40,17 +40,18 @@ class AuthServices:
 
 
     @staticmethod
-    def get_user_by_username_or_email(identifier: str,session: Session) -> User:
-
+    def get_user_by_username_or_email(identifier: str, session: Session) -> User | None:
+        """Get user by username or email, raises error if not found"""
         user = session.exec(select(User).where(User.username == identifier)).first()
 
         if user is None:
             user = session.exec(select(User).where(User.email == identifier)).first()
 
         if user is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="User not found")
+            return None
 
         return user
+
 
     @staticmethod
     def verify_password(plain_password, hashed_password) -> bool:
@@ -65,9 +66,11 @@ class AuthServices:
     def authenticate_user(identifier: str, password: str, session: Session):
 
         user = AuthServices.get_user_by_username_or_email(identifier,session)
+        if user is None:
+            raise HTTPException(status_code=400, detail="Incorrect username or password")
         verified = AuthServices.verify_password(password, user.hashed_password)
         if not verified:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Wrong Password")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Incorrect username or password")
         return user
 
     @staticmethod

@@ -6,7 +6,7 @@ from sqlmodel import Session, select
 from app.core.security import get_password_hash, get_user
 from app.models.user_models import User
 from app.schemas.user_schemas import UserCreate
-from app.utils.helper import check_db_ready
+
 
 
 class UserService:
