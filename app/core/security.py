@@ -35,14 +35,14 @@ def get_user(username_or_email: str, session: Session) -> User | None:
 def authenticate_user(identifier: str, password: str, session: Session):
     return AuthServices.authenticate_user(identifier, password, session)
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)],session: Session) -> User:
-    return await AuthServices.get_current_user(token, session)
+def get_current_user(token: Annotated[str, Depends(oauth2_scheme)],session: Session) -> User:
+    return AuthServices.get_current_user(token, session)
 
-async def get_current_active_user(current_user: Annotated[User, Depends(get_current_user)]):
-    return await AuthServices.get_current_active_user(current_user)
+def get_current_active_user(current_user: Annotated[User, Depends(get_current_user)]):
+    return AuthServices.get_current_active_user(current_user)
 
-async def require_admin(current_user: Annotated[User, Depends(get_current_active_user)],) -> User:
-    return await AuthServices.require_admin(current_user)
+def require_admin(current_user: Annotated[User, Depends(get_current_active_user)],) -> User:
+    return AuthServices.require_admin(current_user)
 
 
 

@@ -1,14 +1,13 @@
-from sqlite3 import IntegrityError
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlmodel import Session, select
+from sqlmodel import Session
 from starlette import status
 
-from app.core.security import get_user, get_password_hash, authenticate_user, create_access_token
+from app.core.security import authenticate_user, create_access_token
 from app.db.session import get_session
-from app.models.user_models import User
 from app.schemas.auth_schemas import Token
 
 from app.schemas.user_schemas import UserCreate
@@ -18,37 +17,9 @@ router = APIRouter()
 
 
 @router.post("/register")
-def register_user(user: UserCreate, session: Session = Depends(get_session)):
-    existing = get_user(user.username, session)
-    if existing:
-        raise HTTPException(status_code=400, detail="user already registered")
+async def register_user(user: UserCreate, session: Session = Depends(get_session)):
+    return await UserService.register_user(user, session)
 
-    # Check if email already exists
-    existing_email = session.exec(select(User).where(User.email == user.email)).first()
-    if existing_email:
-        raise HTTPException(status_code=400, detail="email already registered")
-
-    try:
-        # hash the password before saving
-        hashed_pwd = get_password_hash(user.password)
-        new_user = User(
-            username=user.username,
-            full_name=user.full_name,
-            email=user.email,
-            hashed_password=hashed_pwd
-        )
-
-        session.add(new_user)
-        session.commit()
-        session.refresh(new_user)
-        return {"message": "User registered successfully", "user_id": new_user.id}
-
-    except IntegrityError as error:
-        session.rollback()
-        raise HTTPException(status_code=400, detail=str(error))
-    except Exception as error:
-        session.rollback()
-        raise HTTPException(status_code=400, detail=str(error))
 
 
 @router.post("/token", response_model=Token)

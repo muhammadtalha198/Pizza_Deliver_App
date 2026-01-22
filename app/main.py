@@ -11,9 +11,10 @@ def create_app() -> FastAPI:
     setup_logging()
     app = FastAPI(title=settings.APP_NAME)
     app.include_router(health_router, prefix="/api")
-    app.include_router(user_router, prefix="/auth")
+    app.include_router(user_router, prefix="/auth",tags=["Auth"])
 
     return app
 
+app = create_app(
 
-app = create_app()
+)

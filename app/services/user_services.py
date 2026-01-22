@@ -1,6 +1,9 @@
+from sqlite3 import IntegrityError
+
 from fastapi import  HTTPException
 from sqlmodel import Session, select
 
+from app.core.security import get_password_hash, get_user
 from app.models.user_models import User
 from app.schemas.user_schemas import UserCreate
 from app.utils.helper import check_db_ready
@@ -10,17 +13,35 @@ class UserService:
     @staticmethod
     async def register_user(user: UserCreate, session: Session):
 
-        #check db and table
-        check_db_ready(session)
+        existing = get_user(user.username, session)
+        if existing:
+            raise HTTPException(status_code=400, detail="user already registered")
 
-        existing_user = session.exec(select(User).where(User.email == user.email)).first()
-        if existing_user:
-            raise HTTPException(status_code=400, detail="Username already taken")
+        # Check if email already exists
+        existing_email = session.exec(select(User).where(User.email == user.email)).first()
+        if existing_email:
+            raise HTTPException(status_code=400, detail="email already registered")
 
-        # session.add(user)
-        # session.commit()
-        return user
+        try:
+            # hash the password before saving
+            hashed_pwd = get_password_hash(user.password)
+            new_user = User(
+                username=user.username,
+                full_name=user.full_name,
+                email=user.email,
+                hashed_password=hashed_pwd
+            )
 
-        # if existing_user = session.ex
+            session.add(new_user)
+            session.commit()
+            session.refresh(new_user)
+            return {"message": "User registered successfully", "user_id": new_user.id}
+
+        except IntegrityError as error:
+            session.rollback()
+            raise HTTPException(status_code=400, detail=str(error))
+        except Exception as error:
+            session.rollback()
+            raise HTTPException(status_code=400, detail=str(error))
 
 
