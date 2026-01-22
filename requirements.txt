@@ -36,6 +36,7 @@ Pygments==2.19.2
 PyJWT==2.10.1
 pytest==9.0.2
 python-dotenv==1.2.1
+python-multipart==0.0.21
 PyYAML==6.0.3
 SQLAlchemy==2.0.45
 sqlmodel==0.0.31

@@ -5,11 +5,11 @@ class UserCreate(BaseModel):
     username: str
     full_name: str
     email: EmailStr
-    hashed_password: str
+    password: str
 
 # Login (input)
 class UserLogin(BaseModel):
     username: str
     email: EmailStr
-    hashed_password: str
+    password: str
 
