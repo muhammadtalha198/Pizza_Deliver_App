@@ -62,7 +62,7 @@ class UserService:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Create access token
+        # Create access token and send in return
         access_token = create_access_token(data={"sub": user.username, "email": user.email})
         return {"access_token": access_token, "token_type": "bearer"}
 
