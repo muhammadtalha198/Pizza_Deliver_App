@@ -45,6 +45,9 @@ def get_current_active_user(current_user: Annotated[User, Depends(get_current_us
 def require_admin(current_user: Annotated[User, Depends(get_current_active_user)],) -> User:
     return AuthServices.require_admin(current_user)
 
+def send_verification_email(user_id: str, email: str):
+    return AuthServices.send_verification_email(user_id, email)
+
 
 
 

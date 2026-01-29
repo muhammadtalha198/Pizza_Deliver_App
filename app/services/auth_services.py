@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime, timezone
+from typing import Optional
 
 import jwt
 from fastapi import HTTPException, Depends
@@ -11,6 +12,7 @@ from starlette import status
 from app.core.config import settings
 from app.models.user_models import User
 from app.schemas.auth_schemas import TokenData
+from app.utils.email_utils import send_email_verification
 
 
 ALGORITHM = "HS256"
@@ -18,22 +20,22 @@ password_hash = PasswordHash.recommended()
 
 class AuthServices:
     @staticmethod
-    def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
         to_encode = data.copy()
 
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta( minutes=settings.access_token_expire_minutes)
+            expire = datetime.now(timezone.utc) + timedelta( minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
         to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+        encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
         return encoded_jwt
 
     @staticmethod
     def decode_token(token: str) -> dict:
         try:
-            payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
             return payload
         except jwt.ExpiredSignatureError:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
@@ -105,3 +107,20 @@ class AuthServices:
         if not current_user.is_admin:
             raise HTTPException(status_code=400, detail="Admin required")
         return current_user
+
+    @staticmethod
+    def create_email_verification_token(user_id: str) -> str:
+        """Create a JWT token for email verification."""
+        expires = timedelta(hours=24)
+
+        payload = {
+            "sub": "email_verification",
+            "user_id": user_id,
+        }
+        return AuthServices.create_access_token(payload, expires_delta=expires)
+
+    @staticmethod
+    def send_verification_email(user_id: str, user_email: str):
+        """Generate email verification token and send the email."""
+        token = AuthServices.create_email_verification_token(user_id)
+        send_email_verification(user_email, token)

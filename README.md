@@ -48,6 +48,14 @@ Generate migration:
 
 alembic stamp head
 
+remove migration
+# rm alembic/versions/2ed99296bced_add_email_verification_check.py
+# rm -rf alembic/versions/*
+
+use database directly 
+# psql -h localhost -U pizza -d pizza_delivery
+# DROP TABLE IF EXISTS alembic_version CASCADE;
+
 ////-----------------------------------------------------------------------------------------
 test apis
 # pytest -q

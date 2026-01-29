@@ -23,20 +23,7 @@ async def register_user(user: UserCreate, session: Session = Depends(get_session
 
 
 @router.post("/token", response_model=Token)
-def login(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    session: Session = Depends(get_session)
-):
-    # Authenticate user with either username or email and password
-    # The OAuth2PasswordRequestForm uses "username" field, but we accept either username or email
-    user = authenticate_user(form_data.username, form_data.password, session)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username/email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # Create access token
-    access_token = create_access_token(data={"sub": user.username})
-    return {"access_token": access_token, "token_type": "bearer"}
+def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],session: Session = Depends(get_session)):
+    return UserService.login_user(form_data, session)
+
+

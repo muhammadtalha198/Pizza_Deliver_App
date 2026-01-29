@@ -2,8 +2,10 @@ from sqlite3 import IntegrityError
 
 from fastapi import  HTTPException
 from sqlmodel import Session, select
+from starlette import status
 
-from app.core.security import get_password_hash, get_user
+from app.core.security import get_password_hash, get_user, authenticate_user, create_access_token, \
+    send_verification_email
 from app.models.user_models import User
 from app.schemas.user_schemas import UserCreate
 
@@ -35,6 +37,10 @@ class UserService:
             session.add(new_user)
             session.commit()
             session.refresh(new_user)
+
+            # 🔥 Send email
+            send_verification_email(new_user.id,new_user.email)
+
             return {"message": "User registered successfully", "user_id": new_user.id}
 
         except IntegrityError as error:
@@ -44,4 +50,19 @@ class UserService:
             session.rollback()
             raise HTTPException(status_code=400, detail=str(error))
 
+    @staticmethod
+    def login_user(form_data, session: Session):
+        # Authenticate user with either username or email and password
+        # The OAuth2PasswordRequestForm uses "username" field, but we accept either username or email
+        user = authenticate_user(form_data.username, form_data.password, session)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username/email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # Create access token
+        access_token = create_access_token(data={"sub": user.username, "email": user.email})
+        return {"access_token": access_token, "token_type": "bearer"}
 

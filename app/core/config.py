@@ -14,7 +14,12 @@ class Settings(BaseSettings):
 
     # access token info
     SECRET_KEY: str
-    access_token_expire_minutes: int
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    ALGORITHM: str
+
+    # email verification
+    SENDGRID_API_KEY: str
+    EMAIL_SENDER: str
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
